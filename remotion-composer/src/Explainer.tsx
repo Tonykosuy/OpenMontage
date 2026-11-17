@@ -594,16 +594,18 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
   const bgColor = (rawBg === theme.backgroundColor || rawBg === "#0F172A" || rawBg === "#0f172a") ? "transparent" : rawBg;
   const textColor = cut.color || theme.textColor;
   const accent = cut.accentColor || theme.accentColor;
+  const headFont = theme.headingFont || "inherit";
+  const bodyFont = theme.bodyFont || headFont;
 
   // Explicit component types — use theme-derived defaults for colors
   if (cut.type === "text_card" && cut.text) {
     return maybeWrapWithBg(
-      <TextCard text={cut.text} fontSize={cut.fontSize} color={textColor} backgroundColor={bgColor} />
+      <TextCard text={cut.text} fontSize={cut.fontSize} color={textColor} backgroundColor={bgColor} fontFamily={headFont} />
     );
   }
   if (cut.type === "stat_card" && cut.stat) {
     return maybeWrapWithBg(
-      <StatCard stat={cut.stat} subtitle={cut.subtitle} accentColor={accent} backgroundColor={bgColor} />
+      <StatCard stat={cut.stat} subtitle={cut.subtitle} accentColor={accent} color={textColor} backgroundColor={bgColor} fontFamily={headFont} />
     );
   }
   if (cut.type === "callout" && cut.text) {
@@ -613,6 +615,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         borderColor={accent} backgroundColor={cut.backgroundColor || theme.surfaceColor}
         textColor={textColor} containerBackgroundColor={bgColor}
         fontSize={cut.fontSize} titleFontSize={cut.titleFontSize}
+        fontFamily={bodyFont}
       />
     );
   }
@@ -623,6 +626,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         leftValue={cut.leftValue} rightValue={cut.rightValue}
         title={cut.title} backgroundColor={bgColor} textColor={textColor}
         cardBackgroundColor={cut.cardBackgroundColor || theme.surfaceColor}
+        fontFamily={bodyFont}
       />
     );
   }
@@ -635,6 +639,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         textColor={textColor}
         subtitleColor={theme.mutedTextColor}
         scrimBackground={heroScrim(theme)}
+        fontFamily={headFont}
       />
     );
   }
@@ -668,7 +673,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         data={cut.chartData} title={cut.title} colors={cut.chartColors || theme.chartColors}
         animationStyle={(cut.chartAnimation as any) || "grow-up"}
         showGrid={cut.showGrid} showValues={cut.showValues} backgroundColor={bgColor}
-        textColor={textColor}
+        textColor={textColor} fontFamily={bodyFont}
       />
     );
   }
@@ -679,7 +684,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         animationStyle={(cut.chartAnimation as any) || "draw"}
         showGrid={cut.showGrid} showMarkers={cut.showMarkers} showLegend={cut.showLegend}
         xLabel={cut.xLabel} yLabel={cut.yLabel} backgroundColor={bgColor}
-        textColor={textColor}
+        textColor={textColor} fontFamily={bodyFont}
       />
     );
   }
@@ -690,7 +695,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         animationStyle={(cut.chartAnimation as any) || "expand"}
         donut={cut.donut} centerLabel={cut.centerLabel} centerValue={cut.centerValue}
         showLegend={cut.showLegend} backgroundColor={bgColor}
-        textColor={textColor}
+        textColor={textColor} fontFamily={bodyFont}
       />
     );
   }
@@ -701,7 +706,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         colors={cut.chartColors || theme.chartColors} animationStyle={(cut.chartAnimation as any) || "count-up"}
         backgroundColor={bgColor}
         cardBackgroundColor={cut.cardBackgroundColor || theme.surfaceColor}
-        textColor={textColor}
+        textColor={textColor} fontFamily={bodyFont}
       />
     );
   }
@@ -718,6 +723,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
           <div style={{
             position: "absolute", top: 120, fontSize: 48, fontWeight: 700,
             color: textColor, textAlign: "center", width: "100%",
+            fontFamily: headFont,
             // ProgressBar renders an opaque full-frame AbsoluteFill after this
             // node, so the title needs to be lifted above it to stay visible.
             zIndex: 1,
@@ -730,6 +736,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
           color={cut.progressColor || accent}
           animationStyle={(cut.progressAnimation as any) || "fill"}
           segments={cut.progressSegments} backgroundColor={cut.backgroundColor || theme.surfaceColor}
+          fontFamily={bodyFont} textColor={textColor}
         />
       </AbsoluteFill>
     );
@@ -844,15 +851,65 @@ const OverlayRenderer: React.FC<{ overlay: Overlay; theme: ThemeConfig }> = ({
 // Main composition
 // ---------------------------------------------------------------------------
 
+const SINGLE_WEIGHT_FONTS = new Set([
+  "Anton",
+  "Bebas Neue",
+  "Bungee",
+  "Paytone One",
+  "Alfa Slab One",
+  "Pacifico",
+  "Great Vibes",
+  "Patrick Hand",
+]);
+
+const GENERIC_FAMILIES = new Set([
+  "",
+  "inherit",
+  "sans-serif",
+  "serif",
+  "monospace",
+  "cursive",
+  "system-ui",
+  "-apple-system",
+  "Arial",
+  "Georgia",
+  "Impact",
+]);
+
+function extractPrimaryFontName(raw?: string): string {
+  if (!raw) return "";
+  const first = raw.split(",")[0]?.trim().replace(/^['"]|['"]$/g, "") || "";
+  return GENERIC_FAMILIES.has(first) ? "" : first;
+}
+
+function buildDynamicFontImports(candidates: Array<string | undefined>): string {
+  const unique = Array.from(
+    new Set(candidates.map(extractPrimaryFontName).filter(Boolean))
+  );
+  return unique
+    .map((fam) => {
+      const q = encodeURIComponent(fam).replace(/%20/g, "+");
+      const spec = SINGLE_WEIGHT_FONTS.has(fam) ? q : `${q}:wght@400;600;700`;
+      return `@import url('https://fonts.googleapis.com/css2?family=${spec}&display=swap');`;
+    })
+    .join("\n");
+}
+
 export const Explainer: React.FC<ExplainerProps> = (props) => {
   const { cuts, overlays, captions, audio } = props;
   const { fps, durationInFrames } = useVideoConfig();
 
   // Resolve theme from props — playbook name, theme name, or custom themeConfig
   const theme = resolveTheme(props as Record<string, unknown>);
+  const fontImportCss = buildDynamicFontImports([
+    theme.headingFont,
+    theme.bodyFont,
+    props.captionProps?.fontFamily,
+  ]);
 
   return (
     <AbsoluteFill style={{ background: theme.backgroundColor, fontFamily: theme.headingFont || fontFamily }}>
+      {fontImportCss && <style>{fontImportCss}</style>}
       {/* Layer 0: Animated gradient background — driven by theme */}
       <AnimatedBackground theme={theme} />
 
@@ -892,6 +949,7 @@ export const Explainer: React.FC<ExplainerProps> = (props) => {
           color={theme.textColor}
           highlightColor={theme.captionHighlightColor}
           backgroundColor={theme.captionBackgroundColor}
+          fontFamily={props.captionProps?.fontFamily || theme.headingFont || fontFamily}
           {...props.captionProps}
         />
       )}

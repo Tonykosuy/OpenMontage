@@ -8,6 +8,7 @@ interface StatCardProps {
   color?: string;
   accentColor?: string;
   backgroundColor?: string;
+  fontFamily?: string;
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -18,6 +19,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   color = "#FFFFFF",
   accentColor = "#F59E0B",
   backgroundColor = "#1F2937",
+  fontFamily = "inherit",
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -50,7 +52,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             transform: `scale(${scale})`,
             fontSize: statFontSize,
             color: accentColor,
-            fontFamily: "Inter, system-ui, sans-serif",
+            fontFamily,
             fontWeight: 800,
             lineHeight: 1.1,
           }}
@@ -63,7 +65,7 @@ export const StatCard: React.FC<StatCardProps> = ({
               opacity: subtitleOpacity,
               fontSize: subtitleFontSize,
               color,
-              fontFamily: "Inter, system-ui, sans-serif",
+              fontFamily,
               fontWeight: 400,
               marginTop: 16,
             }}

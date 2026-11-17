@@ -21,6 +21,7 @@ type HeroTitleProps = {
    * scrim darkens the backdrop and cancels out the theme's dark text.
    */
   scrimBackground?: string;
+  fontFamily?: string;
 };
 
 const DEFAULT_SCRIM =
@@ -33,6 +34,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
   textColor = "#F8FAFC",
   subtitleColor = "#A78BFA",
   scrimBackground = DEFAULT_SCRIM,
+  fontFamily = "inherit",
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -54,7 +56,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
           style={{
             fontSize: 72,
             fontWeight: 800,
-            fontFamily: "Space Grotesk, Inter, system-ui, sans-serif",
+            fontFamily,
             lineHeight: 1.2,
             display: "flex",
             justifyContent: "center",
@@ -101,7 +103,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
               fontSize: 28,
               fontWeight: 400,
               color: subtitleColor,
-              fontFamily: "Space Grotesk, Inter, system-ui, sans-serif",
+              fontFamily,
               letterSpacing: "0.1em",
               textTransform: "uppercase",
             }}

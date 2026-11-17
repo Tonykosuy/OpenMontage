@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenMontage Studio — Xưởng Phim AI Local</title>
+  <link rel="stylesheet" href="/studio-ui/studio.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">🎬</div>
+      <div>
+        <div class="brand-title">OpenMontage Studio</div>
+        <div class="brand-sub">Xưởng Phim AI Local Tại Nhà</div>
+      </div>
+    </div>
+
+    <div class="status-pills" id="status-pills">
+      <span class="pill pill-muted">Đang kiểm tra GPU &amp; công cụ...</span>
+    </div>
+
+    <div class="topbar-actions">
+      <select id="template-select" class="input input-sm" title="Chọn kịch bản mẫu"></select>
+      <button id="btn-load-template" class="btn btn-secondary" type="button">📋 Nạp Mẫu</button>
+      <button id="btn-save-project" class="btn btn-secondary" type="button">💾 Lưu Dự Án</button>
+      <button id="btn-render-video" class="btn btn-primary" type="button">🚀 Render Video (.mp4)</button>
+      <a href="/" target="_blank" rel="noopener" class="btn btn-ghost" title="Mở Backlot Dashboard">📊 Backlot</a>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+      <section class="side-card">
+        <h3>✨ Tạo Dự Án Mới</h3>
+        <div class="form-stack">
+          <input id="new-project-title" class="input" type="text" placeholder="Tên video mới (VD: Review AI 2026)" />
+          <select id="new-project-template" class="input"></select>
+          <button id="btn-create-project" class="btn btn-accent btn-full" type="button">+ Tạo &amp; Mở Dự Án</button>
+        </div>
+      </section>
+
+      <section class="side-card">
+        <div class="side-head">
+          <h3>📁 Dự Án Hiện Có</h3>
+          <button id="btn-refresh-projects" class="btn-icon" type="button" title="Làm mới">↻</button>
+        </div>
+        <div id="project-list" class="item-list"></div>
+      </section>
+
+      <section class="side-card">
+        <div class="side-head">
+          <h3>🗂️ Kho Tài Nguyên</h3>
+          <label class="btn btn-xs btn-secondary upload-btn">
+            + Tải Lên
+            <input id="sidebar-upload-input" type="file" hidden accept="image/*,video/*,audio/*" />
+          </label>
+        </div>
+        <div id="asset-list" class="item-list small-scroll"></div>
+      </section>
+
+      <section class="side-card">
+        <h3>🎥 Video Đã Xuất</h3>
+        <div id="sidebar-render-list" class="item-list small-scroll"></div>
+      </section>
+    </aside>
+
+    <!-- RIGHT WORKSPACE -->
+    <main class="main-panel">
+      <nav class="tab-bar" role="tablist">
+        <button class="tab-btn active" data-tab="timeline" type="button">🎞️ Kịch Bản &amp; Timeline</button>
+        <button class="tab-btn" data-tab="catalog" type="button">📚 Kho 750+ Phong Cách &amp; Mẫu</button>
+        <button class="tab-btn" data-tab="fonts" type="button">🔤 Kho Font Chữ</button>
+        <button class="tab-btn" data-tab="voice" type="button">🎙️ Kho Giọng Đọc Đa Thể Loại</button>
+        <button class="tab-btn" data-tab="workbench" type="button">🎨 Công Cụ AI Sáng Tạo</button>
+        <button class="tab-btn" data-tab="render" type="button">🎬 Render &amp; Phát Video</button>
+      </nav>
+
+      <!-- TAB 1: TIMELINE BUILDER -->
+      <section id="tab-timeline" class="tab-pane active">
+        <div class="card settings-card">
+          <div class="card-head">
+            <div>
+              <h2>⚙️ Thiết Lập Chung Video</h2>
+              <div id="active-style-pill" class="muted">Phong cách đang chọn: <strong id="active-style-label">Mặc định</strong></div>
+            </div>
+            <div class="inline-row">
+              <button id="btn-goto-catalog" class="btn btn-xs btn-secondary" type="button">📚 Chọn từ 750+ Mẫu</button>
+              <div class="project-id-badge">ID: <code id="current-project-id">—</code></div>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <label class="field">
+              <span>Tên dự án</span>
+              <input id="proj-title" class="input" type="text" />
+            </label>
+            <label class="field">
+              <span>Khung hình (Profile)</span>
+              <select id="proj-profile" class="input"></select>
+            </label>
+            <label class="field">
+              <span>Giao diện đồ họa (Theme)</span>
+              <select id="proj-theme" class="input"></select>
+            </label>
+          </div>
+
+          <div class="grid-3">
+            <label class="field">
+              <span>Nhân vật Giọng đọc (Đa thể loại)</span>
+              <div class="inline-row">
+                <select id="proj-voice-persona" class="input"></select>
+                <button id="btn-open-voice-tab" class="btn btn-xs btn-secondary" type="button" title="Mở kho 37+ giọng đọc">🎭</button>
+              </div>
+            </label>
+            <label class="field">
+              <span>Model Offline Dự phòng (Piper TTS)</span>
+              <select id="proj-voice" class="input"></select>
+            </label>
+            <label class="field">
+              <span>Tốc độ đọc (<strong id="voice-speed-val">1.00</strong>x)</span>
+              <input id="proj-voice-speed" type="range" min="0.7" max="1.4" step="0.05" value="1.0" />
+            </label>
+          </div>
+
+          <div class="grid-3">
+            <div class="field">
+              <span>Nhạc nền &amp; Âm lượng (<strong id="music-vol-val">14</strong>%)</span>
+              <div class="inline-row">
+                <select id="proj-music" class="input"></select>
+                <button id="btn-preview-music" class="btn btn-secondary btn-sm" type="button" title="Nghe thử nhạc nền">▶</button>
+              </div>
+              <input id="proj-music-vol" type="range" min="0" max="0.5" step="0.02" value="0.14" />
+              <audio id="music-preview-audio" hidden controls></audio>
+            </div>
+            <div class="field">
+              <span>Chỉnh Màu Điện Ảnh (Color Grade)</span>
+              <select id="proj-color-grade" class="input"></select>
+            </div>
+            <div class="field">
+              <span>Lọc Âm Giọng Nói (Audio Enhance)</span>
+              <select id="proj-audio-enhance" class="input"></select>
+            </div>
+          </div>
+
+          <details class="edit-pro-panel" id="edit-pro-details" open>
+            <summary>🎨 Tùy Chỉnh Màu Sắc, Font, Nhịp Độ &amp; Phụ Đề (Edit Pro)</summary>
+            <div class="edit-pro-body">
+              <div class="grid-4">
+                <label class="field">
+                  <span>Màu nền chính</span>
+                  <input id="cfg-bg-color" class="input input-color" type="color" value="#0F172A" />
+                </label>
+                <label class="field">
+                  <span>Màu chủ đạo</span>
+                  <input id="cfg-primary-color" class="input input-color" type="color" value="#60A5FA" />
+                </label>
+                <label class="field">
+                  <span>Màu nhấn nổi bật</span>
+                  <input id="cfg-accent-color" class="input input-color" type="color" value="#22D3EE" />
+                </label>
+                <label class="field">
+                  <span>Màu chữ chính</span>
+                  <input id="cfg-text-color" class="input input-color" type="color" value="#F8FAFC" />
+                </label>
+              </div>
+              <div class="grid-4">
+                <label class="field">
+                  <span>Font chữ tiêu đề / nội dung</span>
+                  <div class="inline-row">
+                    <select id="cfg-font" class="input">
+                      <option value="Inter">Inter (Hiện đại chuẩn)</option>
+                      <option value="Be Vietnam Pro">Be Vietnam Pro (Chuẩn Việt)</option>
+                      <option value="Space Grotesk">Space Grotesk (Công nghệ / AI)</option>
+                    </select>
+                    <button id="btn-open-font-tab" class="btn btn-xs btn-secondary" type="button" title="Mở Kho 40+ Font Chữ">🔤</button>
+                  </div>
+                </label>
+                <label class="field">
+                  <span>Font chữ Phụ đề Karaoke</span>
+                  <select id="cfg-caption-font" class="input">
+                    <option value="">Theo Font tiêu đề dự án</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Nhịp chuyển cảnh (Pace)</span>
+                  <select id="cfg-pace" class="input">
+                    <option value="normal">Chuẩn cân đối (1.0x)</option>
+                    <option value="fast">Nhanh sôi động (TikTok / Shorts)</option>
+                    <option value="cinematic">Chậm điện ảnh (Cinematic)</option>
+                    <option value="snappy">Dứt khoát (Motion Graphic)</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Cường độ chỉnh màu (<strong id="color-int-val">0.70</strong>)</span>
+                  <input id="proj-color-intensity" type="range" min="0" max="1" step="0.05" value="0.7" />
+                </label>
+              </div>
+              <div class="grid-4">
+                <label class="field">
+                  <span>Cỡ chữ phụ đề (px)</span>
+                  <input id="cfg-cap-size" class="input" type="number" min="24" max="96" step="2" value="54" />
+                </label>
+                <label class="field">
+                  <span>Màu Highlight Karaoke</span>
+                  <input id="cfg-cap-highlight" class="input input-color" type="color" value="#FACC15" />
+                </label>
+                <label class="field">
+                  <span>Số từ mỗi dòng phụ đề</span>
+                  <input id="cfg-cap-words" class="input" type="number" min="1" max="8" step="1" value="3" />
+                </label>
+                <label class="field">
+                  <span>Kiểu khung phụ đề</span>
+                  <select id="cfg-cap-box" class="input">
+                    <option value="pill">Hộp Pill Bo Tròn</option>
+                    <option value="solid">Thanh Nền Tối Mờ</option>
+                    <option value="none">Chữ Nổi Không Nền</option>
+                    <option value="karaoke">Karaoke Bật Nhấn Từng Từ</option>
+                  </select>
+                </label>
+              </div>
+              <div class="inline-row wrap">
+                <button id="btn-apply-colors-all" class="btn btn-xs btn-accent" type="button">🎨 Áp bảng màu cho tất cả cảnh</button>
+              </div>
+            </div>
+          </details>
+
+          <div class="toggle-row">
+            <label class="checkbox-pill">
+              <input id="proj-auto-tts" type="checkbox" checked />
+              <span>🔊 Tự tạo giọng đọc theo kịch bản từng cảnh</span>
+            </label>
+            <label class="checkbox-pill">
+              <input id="proj-auto-captions" type="checkbox" checked />
+              <span>💬 Tự tạo phụ đề Karaoke chạy theo lời thoại</span>
+            </label>
+            <label class="checkbox-pill">
+              <input id="proj-auto-fit" type="checkbox" checked />
+              <span>⏱️ Tự cân chỉnh thời lượng cảnh vừa khít giọng nói</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h2>🎬 Dòng Thời Gian (<span id="scene-count">0</span> cảnh • Tổng: <span id="timeline-duration">0.0s</span>)</h2>
+            </div>
+            <div class="quick-add-bar">
+              <button class="btn btn-xs btn-secondary" data-add-type="hero_title" type="button">+ Tiêu đề</button>
+              <button class="btn btn-xs btn-secondary" data-add-type="stat_card" type="button">+ Số liệu</button>
+              <button class="btn btn-xs btn-secondary" data-add-type="comparison" type="button">+ So sánh</button>
+              <button class="btn btn-xs btn-secondary" data-add-type="bar_chart" type="button">+ Biểu đồ cột</button>
+              <button class="btn btn-xs btn-secondary" data-add-type="pie_chart" type="button">+ Biểu đồ tròn</button>
+              <button class="btn btn-xs btn-secondary" data-add-type="callout" type="button">+ Hộp nhấn</button>
+              <button class="btn btn-xs btn-secondary" data-add-type="image" type="button">+ Hình ảnh</button>
+              <button class="btn btn-xs btn-secondary" data-add-type="video" type="button">+ Video Clip</button>
+            </div>
+          </div>
+
+          <div id="timeline-ruler" class="timeline-ruler"></div>
+          <div id="scene-list" class="scene-list"></div>
+        </div>
+      </section>
+
+      <!-- TAB 2: 750+ OPENMONTAGE STYLE & TEMPLATE CATALOG -->
+      <section id="tab-catalog" class="tab-pane">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h2>📚 Thư Viện 750+ Phong Cách, Playbook &amp; Mẫu Video OpenMontage</h2>
+              <p class="muted">Mỗi mẫu đều có thumbnail minh họa, bảng màu riêng và 1 bấm áp dụng trực tiếp vào video hoặc chèn cảnh mẫu vào Timeline.</p>
+            </div>
+            <span id="catalog-total-badge" class="pill pill-ok">Đang tải thư viện...</span>
+          </div>
+
+          <div class="catalog-toolbar">
+            <div class="inline-row grow">
+              <input id="catalog-search" class="input" type="search" placeholder="🔍 Tìm phong cách, lĩnh vực (VD: cyberpunk, youtube, anime, documentary, tiktok, finance...)" />
+              <button id="catalog-clear-search" class="btn btn-secondary btn-sm" type="button">Xóa lọc</button>
+            </div>
+            <div id="catalog-categories" class="cat-pills"></div>
+          </div>
+
+          <div id="catalog-grid" class="catalog-grid"></div>
+
+          <div class="pagination-bar">
+            <button id="catalog-prev" class="btn btn-secondary btn-sm" type="button">← Trang trước</button>
+            <span id="catalog-page-info" class="muted">Trang 1 / 1</span>
+            <button id="catalog-next" class="btn btn-secondary btn-sm" type="button">Trang sau →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2B: TYPOGRAPHY & 40+ FONT LIBRARY -->
+      <section id="tab-fonts" class="tab-pane">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h2>🔤 Kho Font Chữ Sáng Tạo &amp; Phối Kiểu Chữ Tiếng Việt</h2>
+              <p class="muted">Thử chữ tiếng Việt trực tiếp trên từng font, áp dụng bộ phối chuẩn điện ảnh chỉ 1 chạm hoặc tải lên tệp font <code>.ttf/.otf/.woff2</code> riêng của bạn.</p>
+            </div>
+            <div class="inline-row wrap">
+              <span id="font-total-badge" class="pill pill-ok">Đang tải font...</span>
+              <label class="btn btn-xs btn-accent upload-btn">
+                + Tải Font (.ttf/.otf/.woff2)
+                <input id="font-upload-input" type="file" hidden accept=".ttf,.otf,.woff,.woff2" />
+              </label>
+            </div>
+          </div>
+
+          <div class="font-active-bar">
+            <span class="pill pill-muted">📌 Font Tiêu đề / Chính: <strong id="active-heading-font-pill">Space Grotesk</strong></span>
+            <span class="pill pill-muted">💬 Font Phụ đề Karaoke: <strong id="active-caption-font-pill">Theo Font chính</strong></span>
+          </div>
+
+          <h3 class="section-subtitle">✨ 12 Bộ Phối Font Chuẩn Điện Ảnh (Áp dụng 1 chạm)</h3>
+          <div id="font-pairings-grid" class="font-pairings-grid"></div>
+
+          <hr class="divider" />
+
+          <h3 class="section-subtitle">🎨 Thư Viện 40+ Font Chữ &amp; Khung Thử Chữ Sống</h3>
+          <div class="font-toolbar">
+            <div class="grid-3">
+              <label class="field">
+                <span>Nhập chữ tiếng Việt để thử trực tiếp trên mọi font</span>
+                <input id="font-preview-text" class="input" type="text" value="Xưởng phim AI OpenMontage — Đậm đà sắc Việt 2026!" />
+              </label>
+              <div class="grid-2">
+                <label class="field">
+                  <span>Cỡ xem thử (<strong id="font-size-val">30</strong>px)</span>
+                  <input id="font-preview-size" type="range" min="20" max="56" step="2" value="30" />
+                </label>
+                <label class="field">
+                  <span>Độ đậm (Weight)</span>
+                  <select id="font-preview-weight" class="input">
+                    <option value="400">Regular (400)</option>
+                    <option value="600">SemiBold (600)</option>
+                    <option value="700" selected>Bold (700)</option>
+                    <option value="800">ExtraBold (800)</option>
+                  </select>
+                </label>
+              </div>
+              <label class="field">
+                <span>Tìm theo tên font hoặc phong cách</span>
+                <input id="font-search" class="input" type="search" placeholder="VD: Anton, Baloo, Serif, TikTok, Code..." />
+              </label>
+            </div>
+            <div id="font-filter-category" class="cat-pills"></div>
+          </div>
+
+          <div id="font-catalog-grid" class="font-grid"></div>
+        </div>
+      </section>
+
+      <!-- TAB 3: MULTI-GENRE VOICE STUDIO & STT -->
+      <section id="tab-voice" class="tab-pane">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h2>🎭 Kho Giọng Đọc Đa Thể Loại (Nam / Nữ / Già / Trẻ / Thiếu Nhi / AI)</h2>
+              <p class="muted">Chọn nhân vật phù hợp thể loại video (Review Phim, Thời Sự, Podcast, TikTok, Cổ Tích Ông/Bà, Trailer...) rồi bấm Nghe thử hoặc Áp dụng.</p>
+            </div>
+            <span id="voice-count-badge" class="pill pill-ok">0 giọng đọc</span>
+          </div>
+
+          <div class="grid-4 voice-filters">
+            <label class="field">
+              <span>Giới tính / Nhóm</span>
+              <select id="voice-filter-gender" class="input"></select>
+            </label>
+            <label class="field">
+              <span>Độ tuổi</span>
+              <select id="voice-filter-age" class="input"></select>
+            </label>
+            <label class="field">
+              <span>Thể loại / Tone giọng</span>
+              <select id="voice-filter-tone" class="input"></select>
+            </label>
+            <label class="field">
+              <span>Ngôn ngữ / Từ khóa</span>
+              <div class="inline-row">
+                <select id="voice-filter-lang" class="input input-sm">
+                  <option value="all">Tất cả</option>
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="en">English</option>
+                </select>
+                <input id="voice-search" class="input" type="search" placeholder="Tìm tên giọng..." />
+              </div>
+            </label>
+          </div>
+
+          <audio id="persona-audition-audio" class="audio-player hidden" controls></audio>
+          <div id="voice-persona-grid" class="persona-grid"></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h2>🎙️ Phòng Thu Đa Giọng Đọc &amp; Tùy Chỉnh Âm Sắc (Edge + Piper + DSP)</h2>
+            <p class="muted">Tùy biến cao độ (Pitch), âm sắc (Timbre EQ), tốc độ &amp; lọc tạp âm để xuất tệp <code>.wav</code> ngay tại nhà.</p>
+            <div class="form-stack">
+              <div class="grid-2">
+                <label class="field">
+                  <span>Nhân vật giọng đọc (Persona)</span>
+                  <select id="tts-persona" class="input"></select>
+                </label>
+                <label class="field">
+                  <span>Model Piper Offline (tùy chọn override)</span>
+                  <select id="tts-voice" class="input"></select>
+                </label>
+              </div>
+              <div class="grid-3">
+                <label class="field">
+                  <span>Tốc độ đọc (<strong id="tts-speed-val">1.00</strong>x)</span>
+                  <input id="tts-speed" type="range" min="0.7" max="1.4" step="0.05" value="1.0" />
+                </label>
+                <label class="field">
+                  <span>Cao độ Pitch (<strong id="tts-pitch-val">0.0</strong> st)</span>
+                  <input id="tts-pitch" type="range" min="-6" max="6" step="0.5" value="0" />
+                </label>
+                <label class="field">
+                  <span>Ngắt nghỉ câu (giây)</span>
+                  <input id="tts-silence" class="input" type="number" min="0" max="1.5" step="0.05" value="0.25" />
+                </label>
+              </div>
+              <div class="grid-2">
+                <label class="field">
+                  <span>Âm sắc / EQ (Timbre)</span>
+                  <select id="tts-timbre" class="input"></select>
+                </label>
+                <label class="field">
+                  <span>Bộ lọc âm thanh (Audio Enhance)</span>
+                  <select id="tts-enhance" class="input"></select>
+                </label>
+              </div>
+              <label class="checkbox-pill">
+                <input id="tts-prefer-offline" type="checkbox" />
+                <span>🔒 Bắt buộc dùng Piper Offline 100% (không cần Internet)</span>
+              </label>
+              <label class="field">
+                <span>Nội dung văn bản cần đọc</span>
+                <textarea id="tts-text" class="textarea" rows="4" placeholder="Nhập lời thoại tiếng Việt hoặc tiếng Anh...">Xin chào! Đây là xưởng phim AI OpenMontage đang chạy hoàn toàn miễn phí ngay tại nhà.</textarea>
+              </label>
+              <button id="btn-run-tts" class="btn btn-primary" type="button">🔊 Tạo Giọng Đọc (.wav)</button>
+            </div>
+
+            <div id="tts-result-box" class="result-box hidden">
+              <div class="result-meta">
+                <span>✅ Thời lượng: <strong id="tts-dur-label">0s</strong></span>
+                <a id="tts-download-link" href="#" download class="link">⬇️ Tải file .wav</a>
+              </div>
+              <audio id="tts-audio-player" controls class="audio-player"></audio>
+              <div class="sub-caption-preview" id="tts-caption-preview"></div>
+              <button id="btn-tts-add-scene" class="btn btn-accent btn-sm" type="button">➕ Chèn lời thoại này thành Cảnh mới</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>📝 Nhận Diện Giọng Nói Faster-Whisper (STT)</h2>
+            <p class="muted">Chuyển âm thanh hoặc video có sẵn trong dự án thành văn bản &amp; phụ đề có mốc thời gian.</p>
+            <div class="form-stack">
+              <label class="field">
+                <span>Chọn tệp audio/video từ Kho Tài Nguyên</span>
+                <select id="stt-asset-select" class="input"></select>
+              </label>
+              <div class="grid-2">
+                <label class="field">
+                  <span>Mô hình Whisper</span>
+                  <select id="stt-model" class="input">
+                    <option value="tiny">tiny (siêu nhanh)</option>
+                    <option value="base" selected>base (cân bằng)</option>
+                    <option value="small">small (chính xác hơn)</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Ngôn ngữ</span>
+                  <select id="stt-lang" class="input">
+                    <option value="">Tự động nhận diện</option>
+                    <option value="vi" selected>Tiếng Việt (vi)</option>
+                    <option value="en">English (en)</option>
+                  </select>
+                </label>
+              </div>
+              <button id="btn-run-stt" class="btn btn-secondary" type="button">📝 Bóc Băng Giọng Nói (GPU/CPU)</button>
+            </div>
+
+            <div id="stt-result-box" class="result-box hidden">
+              <h4>Kết quả văn bản:</h4>
+              <textarea id="stt-transcript-text" class="textarea" rows="7" readonly></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: AI WORKBENCH -->
+      <section id="tab-workbench" class="tab-pane">
+        <div class="grid-2">
+          <!-- Code Snippet -->
+          <div class="card">
+            <h2>💻 Tạo Ảnh Code Card (Pygments)</h2>
+            <div class="form-stack">
+              <div class="grid-3">
+                <label class="field">
+                  <span>Ngôn ngữ</span>
+                  <select id="code-lang" class="input">
+                    <option value="python">python</option>
+                    <option value="javascript">javascript</option>
+                    <option value="typescript">typescript</option>
+                    <option value="bash">bash</option>
+                    <option value="json">json</option>
+                    <option value="html">html</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Giao diện</span>
+                  <select id="code-theme" class="input">
+                    <option value="monokai">monokai</option>
+                    <option value="github_dark">github_dark</option>
+                    <option value="dracula">dracula</option>
+                    <option value="one_dark">one_dark</option>
+                    <option value="solarized_dark">solarized_dark</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Tiêu đề card</span>
+                  <input id="code-title" class="input" type="text" value="studio_demo.py" />
+                </label>
+              </div>
+              <textarea id="code-input" class="textarea code-font" rows="6">def make_ai_video(topic: str) -&gt; str:
+    voice = synthesize_piper(topic, lang="vi")
+    frames = render_remotion(topic, voice)
+    return export_mp4(frames)</textarea>
+              <button id="btn-gen-code" class="btn btn-primary" type="button">✨ Tạo Ảnh Code</button>
+              <div id="code-result" class="visual-preview hidden"></div>
+            </div>
+          </div>
+
+          <!-- Mermaid Diagram -->
+          <div class="card">
+            <h2>🔀 Vẽ Sơ Đồ Kiến Trúc (Mermaid CLI)</h2>
+            <div class="form-stack">
+              <div class="grid-2">
+                <label class="field">
+                  <span>Tiêu đề sơ đồ</span>
+                  <input id="diag-title" class="input" type="text" value="Luồng Xử Lý Video AI Local" />
+                </label>
+                <label class="field">
+                  <span>Màu nền</span>
+                  <select id="diag-theme" class="input">
+                    <option value="dark" selected>Tối (dark)</option>
+                    <option value="neutral">Trung tính (neutral)</option>
+                    <option value="light">Sáng (light)</option>
+                  </select>
+                </label>
+              </div>
+              <textarea id="diag-input" class="textarea code-font" rows="6">flowchart LR
+  A[Ý tưởng] --&gt; B[Piper TTS VI]
+  A --&gt; C[Đồ họa &amp; Chart]
+  B --&gt; D[Remotion Composer]
+  C --&gt; D
+  D --&gt; E[Video MP4 1080p]</textarea>
+              <button id="btn-gen-diagram" class="btn btn-primary" type="button">✨ Vẽ Sơ Đồ</button>
+              <div id="diag-result" class="visual-preview hidden"></div>
+            </div>
+          </div>
+
+          <!-- AI Image Enhancement -->
+          <div class="card">
+            <h2>✨ Tách Nền &amp; Nâng Nét Ảnh (rembg / Real-ESRGAN / GFPGAN)</h2>
+            <div class="form-stack">
+              <div class="inline-row">
+                <select id="enh-asset-select" class="input"></select>
+                <label class="btn btn-secondary upload-btn">
+                  📤 Tải ảnh lên
+                  <input id="enh-upload-input" type="file" hidden accept="image/*" />
+                </label>
+              </div>
+              <div class="inline-row wrap">
+                <button class="btn btn-secondary" data-enhance="bg_remove" type="button">✂️ Tách Nền (rembg)</button>
+                <button class="btn btn-secondary" data-enhance="upscale" type="button">🔍 Siêu Phân Giải 2x (ESRGAN)</button>
+                <button class="btn btn-secondary" data-enhance="face_restore" type="button">🙂 Làm Nét Khuôn Mặt (GFPGAN)</button>
+              </div>
+              <div id="enh-result" class="visual-preview hidden"></div>
+            </div>
+          </div>
+
+          <!-- Local Diffusion & Stock Search -->
+          <div class="card">
+            <h2>🖼️ Tạo Ảnh AI Local &amp; Kho Video Stock</h2>
+            <div class="form-stack">
+              <label class="field">
+                <span>Prompt tạo ảnh AI (Stable Diffusion local trên GPU)</span>
+                <input id="sd-prompt" class="input" type="text" placeholder="VD: futuristic cozy home AI film studio, neon cyan lighting, ultra detailed" />
+              </label>
+              <div class="inline-row">
+                <select id="sd-size" class="input">
+                  <option value="768x512">Ngang 768x512</option>
+                  <option value="512x512">Vuông 512x512</option>
+                  <option value="512x768">Dọc 512x768</option>
+                </select>
+                <button id="btn-gen-sd" class="btn btn-accent" type="button">🎨 Vẽ Ảnh AI (GPU)</button>
+              </div>
+              <div id="sd-result" class="visual-preview hidden"></div>
+
+              <hr class="divider" />
+
+              <label class="field">
+                <span>Tìm Video/Ảnh Stock miễn phí (Wikimedia / Internet Archive...)</span>
+                <div class="inline-row">
+                  <input id="stock-query" class="input" type="text" placeholder="VD: space earth nebula" />
+                  <select id="stock-kind" class="input input-sm">
+                    <option value="video">Video</option>
+                    <option value="image">Ảnh</option>
+                  </select>
+                  <button id="btn-search-stock" class="btn btn-secondary" type="button">🔍 Tìm &amp; Tải</button>
+                </div>
+              </label>
+              <div id="stock-result" class="stock-grid"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: RENDER & PLAYER -->
+      <section id="tab-render" class="tab-pane">
+        <div class="card">
+          <div class="card-head">
+            <h2>🚀 Tiến Trình Render Video</h2>
+            <span id="render-status-badge" class="pill pill-muted">Chờ lệnh render</span>
+          </div>
+          <div class="progress-track">
+            <div id="render-progress-bar" class="progress-fill" style="width: 0%"></div>
+          </div>
+          <pre id="render-logs" class="log-console">Nhấn "🚀 Render Video (.mp4)" ở góc trên bên phải để bắt đầu kết xuất video từ kịch bản hiện tại.</pre>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>📺 Trình Chiếu Video Thành Phẩm</h2>
+            <div id="player-actions" class="inline-row hidden">
+              <span id="player-meta" class="muted"></span>
+              <a id="player-download-btn" href="#" download class="btn btn-accent btn-sm">⬇️ Tải MP4</a>
+            </div>
+          </div>
+          <div id="player-empty" class="empty-player">
+            Chưa có video nào được chọn. Hãy tạo video mới hoặc chọn một video đã render từ cột bên trái.
+          </div>
+          <video id="studio-video-player" class="video-player hidden" controls playsinline></video>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="catalog-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="card-head">
+        <h2 id="catalog-modal-title">Chi tiết phong cách</h2>
+        <button id="catalog-modal-close" class="btn-icon" type="button" title="Đóng">✕</button>
+      </div>
+      <div class="modal-top">
+        <img id="catalog-modal-thumb" class="modal-thumb" alt="Demo Thumbnail" />
+        <div id="catalog-modal-meta" class="modal-meta"></div>
+      </div>
+      <pre id="catalog-modal-content" class="log-console modal-pre"></pre>
+      <div class="inline-row wrap modal-actions">
+        <button id="catalog-modal-apply" class="btn btn-primary" type="button">🎨 Áp dụng Phong cách này</button>
+        <button id="catalog-modal-insert" class="btn btn-accent" type="button">➕ Chèn Cảnh Mẫu vào Timeline</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="/studio-ui/studio.js" defer></script>
+</body>
+</html>
